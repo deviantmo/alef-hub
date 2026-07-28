@@ -27,7 +27,7 @@ html{font-size:17px;-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);
   font-family:var(--sans);font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased}
 [dir=rtl] body,[dir=rtl] *{font-family:var(--ar)}
-.app{width:100%;background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
+.app{width:100%;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;position:relative}
 /* full-bleed bg, content within a standard centred width */
 .bar,.view,footer{max-width:var(--maxw);margin-inline:auto;width:100%}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
@@ -182,6 +182,42 @@ p{margin:0}
 
 footer{display:flex;justify-content:space-between;padding:22px 26px;color:var(--sub);font-size:.85rem;flex-wrap:wrap;gap:8px}
 
+/* ===== Feedback (pin & comment) ===== */
+#fb-toggle{position:fixed;right:20px;bottom:20px;z-index:50;background:var(--dark);color:#fff;border-radius:40px;height:52px;padding:0 22px;font-weight:500;font-size:.98rem;display:inline-flex;align-items:center;gap:9px;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+#fb-toggle.on{background:var(--coral,#EB6A4E)}
+.fb-dot{width:9px;height:9px;border-radius:50%;background:#fff}
+#fb-hint{position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:52;background:var(--dark);color:#fff;padding:10px 18px;border-radius:40px;font-size:.9rem;display:none;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+body.fb-on #fb-hint{display:block}
+body.fb-on{cursor:crosshair}
+#fb-pins{position:absolute;inset:0;pointer-events:none;z-index:40}
+.fb-pin{position:absolute;transform:translate(-50%,-100%);pointer-events:auto;width:30px;height:30px;border-radius:50% 50% 50% 2px;background:var(--dark);color:#fff;display:grid;place-items:center;font-size:.8rem;font-weight:600;box-shadow:0 3px 10px rgba(0,0,0,.28);cursor:pointer;border:2px solid #fff}
+.fb-pin:hover{background:#EB6A4E}
+.fb-bubble{position:absolute;transform:translate(-50%,10px);z-index:60;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;width:280px;box-shadow:0 14px 40px rgba(0,0,0,.2);pointer-events:auto}
+.fb-bubble textarea{width:100%;height:74px;border:1.5px solid var(--line);border-radius:10px;padding:10px;font-family:inherit;font-size:.95rem;resize:none}
+.fb-bubble .row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.fb-bubble button{border-radius:9px;height:38px;padding:0 14px;font-weight:600;font-size:.9rem}
+.fb-save{background:var(--dark);color:#fff}
+.fb-cancel{background:var(--bg);color:var(--ink)}
+#fb-panel{position:fixed;right:20px;bottom:84px;z-index:51;width:340px;max-height:70vh;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.25);display:none;flex-direction:column;overflow:hidden}
+#fb-panel.open{display:flex}
+.fb-head{padding:16px 18px;border-bottom:1px solid var(--line2)}
+.fb-head h4{font-size:1.05rem;font-weight:500}
+.fb-name{width:100%;height:44px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px;font-family:inherit;font-size:.95rem;margin-top:10px;background:#FAF9F6}
+.fb-name:focus{outline:none;border-color:var(--dark)}
+.fb-list{overflow:auto;padding:8px 12px;flex:1}
+.fb-item{padding:11px 6px;border-top:1px solid var(--line2);font-size:.9rem}
+.fb-item:first-child{border-top:none}
+.fb-item .who{font-weight:600;font-size:.82rem}
+.fb-item .ctx{color:var(--sub);font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;margin:2px 0 4px}
+.fb-item .txt{color:var(--ink)}
+.fb-item .del{float:right;color:var(--sub);cursor:pointer;font-size:.8rem}
+.fb-empty{color:var(--sub);font-size:.9rem;padding:18px 6px;text-align:center}
+.fb-foot{padding:12px;border-top:1px solid var(--line2);display:flex;flex-direction:column;gap:8px}
+.fb-foot button{height:46px;border-radius:11px;font-weight:600;font-size:.95rem}
+.fb-export{background:var(--dark);color:#fff}
+.fb-clear{background:var(--bg);color:var(--sub)}
+@media(max-width:560px){#fb-panel{left:12px;right:12px;width:auto}.fb-bubble{width:240px}}
+
 @media(max-width:900px){
   .grid{grid-template-columns:repeat(4,1fr)}
   .s3{grid-column:span 2}.s4{grid-column:span 4}.hero-cell{grid-column:span 4}
@@ -258,6 +294,22 @@ footer{display:flex;justify-content:space-between;padding:22px 26px;color:var(--
     <span data-i="f_l">Alef Group · Al Mamsha · Zero6 Mall</span>
     <span data-i="f_r">Playbook Hub · V4 · 2026</span>
   </footer>
+
+  <div id="fb-pins"></div>
+</div>
+
+<div id="fb-hint">Click anywhere on the page to leave a comment · press Esc to stop</div>
+<button id="fb-toggle"><span class="fb-dot"></span> Feedback</button>
+<div id="fb-panel">
+  <div class="fb-head">
+    <h4>Leave feedback</h4>
+    <input class="fb-name" id="fb-name" placeholder="Your name (required)" aria-label="Your name">
+  </div>
+  <div class="fb-list" id="fb-list"></div>
+  <div class="fb-foot">
+    <button class="fb-export" id="fb-export">Export report (with screenshots)</button>
+    <button class="fb-clear" id="fb-clear">Clear my comments</button>
+  </div>
 </div>
 
 <script>
@@ -771,6 +823,125 @@ $('#signin').onclick=()=>{
 $('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#signin').click();});
 $('#out').onclick=()=>{authed=false;$('#out').style.display='none';show('login');};
 applyLang();
+
+/* ================= Feedback: pin & comment ================= */
+(function(){
+  const app=document.querySelector('.app'), pinsEl=document.getElementById('fb-pins');
+  const toggle=document.getElementById('fb-toggle'), panel=document.getElementById('fb-panel');
+  const nameEl=document.getElementById('fb-name'), listEl=document.getElementById('fb-list');
+  let on=false, comments=[], bubble=null;
+  try{comments=JSON.parse(localStorage.getItem('alef_fb')||'[]');}catch(e){comments=[];}
+  nameEl.value=localStorage.getItem('alef_fb_name')||'';
+  const save=()=>localStorage.setItem('alef_fb',JSON.stringify(comments));
+  nameEl.addEventListener('input',()=>localStorage.setItem('alef_fb_name',nameEl.value.trim()));
+
+  function ctx(){
+    const v=app.getAttribute('data-view')||'login';
+    if(v==='viewer'&&cur)return{key:'viewer|'+cur.id+'|'+sIdx,label:cur.name+' › '+cur.sections[sIdx].t};
+    const L={home:'Home',play:'Playbooks',dl:'Downloads',login:'Sign in'};
+    return{key:v,label:L[v]||v};
+  }
+  function goto(key){
+    if(key.indexOf('viewer|')===0){const[,id,idx]=key.split('|');const b=BRANDS.find(x=>x.id===id);if(b){cur=b;sIdx=+idx;renderViewer();show('viewer');}}
+    else show(key);
+  }
+  function renderPins(){
+    pinsEl.innerHTML=''; if(bubble){bubble.remove();bubble=null;}
+    const k=ctx().key; let n=0;
+    comments.forEach(c=>{ if(c.key!==k)return; n++;
+      const p=document.createElement('div'); p.className='fb-pin'; p.textContent=n;
+      p.style.left=c.x+'px'; p.style.top=c.y+'px'; p.title=c.name+': '+c.text;
+      p.onclick=ev=>{ev.stopPropagation(); openBubble(c.x,c.y,c);};
+      pinsEl.appendChild(p);
+    });
+  }
+  function openBubble(x,y,existing){
+    if(bubble)bubble.remove();
+    bubble=document.createElement('div'); bubble.className='fb-bubble';
+    bubble.style.left=x+'px'; bubble.style.top=y+'px';
+    if(existing){
+      bubble.innerHTML='<div style="font-weight:600;font-size:.85rem">'+esc(existing.name)+'</div><p style="margin:6px 0;font-size:.92rem">'+esc(existing.text)+'</p><div class="row"><button class="fb-cancel" data-x>Close</button><button class="fb-save" data-del>Delete</button></div>';
+      bubble.querySelector('[data-x]').onclick=()=>{bubble.remove();bubble=null;};
+      bubble.querySelector('[data-del]').onclick=()=>{comments=comments.filter(c=>c!==existing);save();renderPins();renderList();};
+    }else{
+      bubble.innerHTML='<textarea placeholder="What needs changing here?"></textarea><div class="row"><button class="fb-cancel" data-x>Cancel</button><button class="fb-save" data-s>Add</button></div>';
+      const ta=bubble.querySelector('textarea'); setTimeout(()=>ta.focus(),30);
+      bubble.querySelector('[data-x]').onclick=()=>{bubble.remove();bubble=null;};
+      bubble.querySelector('[data-s]').onclick=()=>{
+        const name=nameEl.value.trim();
+        if(!name){panel.classList.add('open');nameEl.focus();nameEl.style.borderColor='#B0553F';return;}
+        const t=ta.value.trim(); if(!t){ta.focus();return;}
+        const c=ctx(); comments.push({name,key:c.key,label:c.label,x,y,text:t,ts:Date.now()});
+        save(); bubble.remove(); bubble=null; renderPins(); renderList();
+      };
+    }
+    pinsEl.appendChild(bubble); pinsEl.style.pointerEvents='none'; bubble.style.pointerEvents='auto';
+  }
+  function renderList(){
+    if(!comments.length){listEl.innerHTML='<div class="fb-empty">No comments yet. Turn on feedback and click anywhere on a page to add one.</div>';return;}
+    const byCtx={}; comments.forEach(c=>{(byCtx[c.label]=byCtx[c.label]||[]).push(c);});
+    listEl.innerHTML=Object.keys(byCtx).map(lbl=>{
+      return byCtx[lbl].map(c=>`<div class="fb-item"><span class="del" data-ts="${c.ts}">✕</span><div class="who">${esc(c.name)}</div><div class="ctx">${esc(lbl)}</div><div class="txt">${esc(c.text)}</div></div>`).join('');
+    }).join('');
+    listEl.querySelectorAll('.del').forEach(d=>d.onclick=()=>{comments=comments.filter(c=>c.ts!=d.dataset.ts);save();renderPins();renderList();});
+  }
+  function setOn(v){on=v;document.body.classList.toggle('fb-on',on);toggle.classList.toggle('on',on);toggle.querySelector('.fb-dot').style.background=on?'#fff':'#fff';toggle.childNodes[1].textContent=on?' Commenting… ':' Feedback';panel.classList.toggle('open',on);if(on)renderList();}
+  toggle.addEventListener('click',()=>setOn(!on));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&on){setOn(false);if(bubble){bubble.remove();bubble=null;}}});
+
+  // capture clicks in comment mode
+  document.addEventListener('click',e=>{
+    if(!on)return;
+    if(e.target.closest('#fb-toggle,#fb-panel,.fb-bubble,.fb-pin'))return;
+    // let real navigation/interaction still work, just don't drop a pin on it
+    if(e.target.closest('a,button,input,textarea,select,[data-go],[data-sec],[data-group],[data-brand],[data-f],.chip'))return;
+    e.preventDefault(); e.stopPropagation();
+    const r=app.getBoundingClientRect();
+    openBubble(e.clientX-r.left, e.clientY-r.top, null);
+  },true);
+
+  document.getElementById('fb-clear').onclick=()=>{if(confirm('Clear all your comments?')){comments=[];save();renderPins();renderList();}};
+
+  // Export report with screenshots
+  function loadH2C(){return new Promise((res,rej)=>{if(window.html2canvas)return res();const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  document.getElementById('fb-export').onclick=async()=>{
+    if(!comments.length){alert('No comments to export yet.');return;}
+    const btn=document.getElementById('fb-export'); btn.textContent='Building report…'; btn.disabled=true;
+    const wasOn=on; setOn(false);
+    try{
+      await loadH2C();
+      const order=[]; comments.forEach(c=>{if(!order.find(o=>o.key===c.key))order.push({key:c.key,label:c.label});});
+      const back=ctx().key; const shots=[];
+      for(const g of order){
+        goto(g.key); await wait(450); renderPins(); await wait(150);
+        const canvas=await html2canvas(app,{scale:.6,backgroundColor:'#F1EFEA',useCORS:true,logging:false,windowWidth:document.documentElement.clientWidth});
+        shots.push({label:g.label,img:canvas.toDataURL('image/jpeg',.72),items:comments.filter(c=>c.key===g.key)});
+      }
+      goto(back); renderPins();
+      const who=(nameEl.value.trim()||'Reviewer');
+      let html='<!doctype html><meta charset=utf-8><title>Alef Hub — Feedback</title><body style="font-family:Helvetica,Arial,sans-serif;max-width:900px;margin:24px auto;padding:0 16px;color:#1f1f22">';
+      html+='<h1 style="font-weight:300">Alef Hub — Feedback</h1><p style="color:#666">From <b>'+esc(who)+'</b> · '+new Date().toLocaleString()+' · '+comments.length+' comment(s)</p>';
+      shots.forEach(s=>{
+        html+='<h2 style="font-weight:400;margin-top:32px;border-bottom:1px solid #eee;padding-bottom:6px">'+esc(s.label)+'</h2>';
+        html+='<img src="'+s.img+'" style="width:100%;border:1px solid #eee;border-radius:8px">';
+        html+='<ol style="margin-top:12px">'+s.items.map(c=>'<li style="margin:6px 0"><b>'+esc(c.name)+':</b> '+esc(c.text)+'</li>').join('')+'</ol>';
+      });
+      html+='</body>';
+      const blob=new Blob([html],{type:'text/html'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+      a.download='Alef-Hub-Feedback-'+who.replace(/[^a-z0-9]+/gi,'-')+'.html'; a.click();
+      if(wasOn)setOn(true);
+    }catch(err){alert('Could not build the report. You can still see all comments in the panel.');console.error(err);}
+    btn.textContent='Export report (with screenshots)'; btn.disabled=false;
+  };
+
+  // re-render pins whenever the view changes
+  const _show=show; show=function(v){_show(v);renderPins();};
+  const _rv=renderViewer; renderViewer=function(){_rv();renderPins();};
+  const _al=applyLang; applyLang=function(){_al();renderPins();};
+  renderPins(); renderList();
+})();
 </script>
 </body>
 </html>
